@@ -1,40 +1,61 @@
 <!DOCTYPE html>
 <html>
-<!--
 <style>
-.container {
-    height: 1080px;
-    position: relative;
-}
-
-.center {
-    margin: 0;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    -ms-transform: translate(-50%, -50%);
-    transform: translate(-50%, -50%);
-}
+    .gif_space {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 1080px;
+    }
 </style>
--->
 
 <body>
-    <div class = "container">
-        <div class = "center">
-            <div id = "gif_space"></div>
-        </div>
-    </div>
+    <div class = "gif_space" id = "gif_space"></div>
 </body>
+
+
+<!-- PHP to get the array of GIFs -->
+<?php
+
+    // Specify the gifs directory path
+    $gifs_directory = "./gifs";
+
+    // Generate the array based on all of the files in the directory and remove '.' and '..'
+    $gifs = array_diff(scandir($gifs_directory), array('..', '.'));
+
+    // Reset the array indexes after removing '.' and '..'
+    $gifs = array_values($gifs);
+
+    // Remove the file extensions
+    $gifs = array_map(function($e){
+        return pathinfo($e, PATHINFO_FILENAME);
+    }, $gifs);
+
+    /* Debug to display contents of array
+    foreach ($gifs as $gif) {
+        print("$gif</br>");
+    }
+    */
+
+?>
+
 
 <!-- GIF Stuff -->
 <script>
+    
+
+    // Customizable configuration
+    var max_gif_width = 500; // Default is 500
+
+    var gif_playing = false;
+
     function show_image(gif_name) {
         var img = document.createElement("img");
         img.src = "gifs/" + gif_name;
-        img.width = 500;
+        img.width = max_gif_width;
         img.alt = "alt text";
-        img.id = "deleteThis"
-        document.getElementById('gif_space').appendChild(img)
+        img.id = "deleteThis";
+        document.getElementById('gif_space').appendChild(img);
     }
 
     function remove_image() {
@@ -43,17 +64,22 @@
     }
 
     function play_gif(gif_name) {
+        gif_playing = true;
+
         show_image(gif_name);
         setTimeout(() => {
             remove_image();
+            gif_playing = false;
         }, 5000);
+
+
     }
 </script>
 
 <!-- Twitch API Stuff -->
-
 <!-- Obtained from https://github.com/tmijs/tmi.js -->
 <script src="tmi.min.js"></script>
+
 <script>
 
     // Define configuration options
@@ -63,34 +89,38 @@
         ]
     };
 
-    var client = new tmi.client(options);
-    
-    client.connect();
+    // Getting array of GIFs from PHP
+    var gifs_array = <?php echo json_encode($gifs); ?>;
 
+    // Debug info
+    // gifs_array.forEach(element => document.write(element + "<br/>"));
+    // console.log(gifs_array);
+
+
+    // Client connection stuff
+    var client = new tmi.client(options);
+    client.connect();
     client.on('message', (channel, tags, message, self) => {
-        // "Alca: Hello, World!"
-        // console.log(`${tags['display-name']}: ${message}`);
-        console.log("There was a message");
-        if (`${message}` == "!zerotwo") {
-            console.log("Play Zero Two Gif");
-            play_gif("alert_zero_two.gif");
-        } else if (`${message}` == "!rikka") {
-            console.log("Play Rikka Gif");
-            play_gif("rikka_finger_spin.gif");
-        } else if (`${message}` == "!konosuba") {
-            console.log("Play Konosuba Gif");
-            play_gif("konosuba.gif");
-        } else if (`${message}` == "!aqua") {
-            console.log("Play Aqua Gif");
-            play_gif("aqua.gif");
-        } else if (`${message}` == "!megumin") {
-            console.log("Play megumin Gif");
-            play_gif("megumin.gif");
+
+    // Continue if a command is sent
+    if (`${message}`.startsWith("!") ) {
+        //console.log(`${tags['display-name']}: ${message}`);
+
+        user_message = `${message}`.replace('!', '');
+
+        if (gifs_array.includes(user_message)) {
+            if (gif_playing == false) {
+                console.log("Play " + user_message + ".gif");
+                play_gif(user_message + ".gif");
+            } else {
+                console.log("Can't play! GIF already playing!");
+            }
         } else {
-            console.log(`${tags['display-name']}: ${message}`);
+            console.log("NOT A GIF!!!");
         }
+    }
+
     });
 
 </script>
-
 </html>
