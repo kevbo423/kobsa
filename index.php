@@ -17,19 +17,26 @@
 <!-- PHP to get the array of GIFs -->
 <?php
 
-    // Specify the gifs directory path
+    // Specify the gifs and mp3s directory paths
     $gifs_directory = "./gifs";
+    $mp3s_directory = "./mp3s";
 
-    // Generate the array based on all of the files in the directory and remove '.' and '..'
+    // Generate the arrays based on all of the files in the directories and remove '.' and '..'
     $gifs = array_diff(scandir($gifs_directory), array('..', '.'));
+    $mp3s = array_diff(scandir($mp3s_directory), array('..', '.'));
 
     // Reset the array indexes after removing '.' and '..'
     $gifs = array_values($gifs);
+    $mp3s = array_values($mp3s);
 
     // Remove the file extensions
     $gifs = array_map(function($e){
         return pathinfo($e, PATHINFO_FILENAME);
     }, $gifs);
+
+    $mp3s = array_map(function($e){
+        return pathinfo($e, PATHINFO_FILENAME);
+    }, $mp3s);
 
     /* Debug to display contents of array
     foreach ($gifs as $gif) {
@@ -43,7 +50,6 @@
 <!-- GIF Stuff -->
 <script>
     
-
     // Customizable configuration
     var max_gif_width = 500; // Default is 500
 
@@ -71,9 +77,12 @@
             remove_image();
             gif_playing = false;
         }, 5000);
-
-
     }
+
+    function play_mp3(mp3_name) {
+        new Audio("mp3s/" + mp3_name).play()
+    }
+
 </script>
 
 <!-- Twitch API Stuff -->
@@ -89,8 +98,9 @@
         ]
     };
 
-    // Getting array of GIFs from PHP
+    // Getting array of GIFs and MP3s from PHP
     var gifs_array = <?php echo json_encode($gifs); ?>;
+    var mp3s_array = <?php echo json_encode($mp3s); ?>;
 
     // Debug info
     // gifs_array.forEach(element => document.write(element + "<br/>"));
@@ -117,6 +127,13 @@
             }
         } else {
             console.log("NOT A GIF!!!");
+        }
+
+        if (mp3s_array.includes(user_message)) {
+            console.log("Play " + user_message + ".mp3");
+            play_mp3(user_message + ".mp3");
+        } else {
+            console.log("NOT A MP3!!!");
         }
     }
 
